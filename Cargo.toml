@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "smallworld",
+    "libsmallworld",
+]
+
+[profile.release]
+strip = "symbols"  # approx. 5.3 MB -> 1.3 MB for Linux x86_64 with musl
+lto = true

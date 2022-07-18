@@ -1,0 +1,101 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build:
+
+    env:
+      project_name: smallworld
+
+    strategy:
+      matrix:
+        include:
+          - build_name: 'Linux x86'
+            platform: ubuntu-latest
+            target: i686-unknown-linux-musl
+            bin_name: linux-x86
+          - build_name: 'Linux x86_64'
+            platform: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            bin_name: linux-x86_64
+          - build_name: 'Linux ARM 32-bit'
+            platform: ubuntu-latest
+            target: arm-unknown-linux-musleabi
+            bin_name: linux-arm
+          - build_name: 'Linux ARM 64-bit'
+            platform: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            bin_name: linux-aarch64
+          - build_name: 'Windows x86'
+            platform: windows-latest
+            target: i686-pc-windows-msvc
+            bin_name: windows-x86
+            file_ext: .exe
+          - build_name: 'Windows x86_64'
+            platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin_name: windows-x86_64
+            file_ext: .exe
+          - build_name: 'Windows ARM 64-bit'
+            platform: windows-latest
+            target: aarch64-pc-windows-msvc
+            bin_name: windows-aarch64
+            file_ext: .exe
+          - build_name: 'macOS x86_64'
+            platform: macos-latest
+            target: x86_64-apple-darwin
+            bin_name: macos-x86_64
+          - build_name: 'macOS ARM 64-bit'
+            platform: macos-latest
+            target: aarch64-apple-darwin
+            bin_name: macos-aarch64
+
+    name: ${{ matrix.build_name }}
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Install latest rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        target: ${{ matrix.target }}
+        default: true
+        override: true
+        components: clippy
+    - name: Build
+      env:
+        MACOSX_DEPLOYMENT_TARGET: "10.7"
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --release --target=${{ matrix.target }}
+    - name: Clippy
+      uses: actions-rs/cargo@v1
+      with:
+        command: clippy
+        args: -- -D warnings
+    - name: Prepare dist directory
+      shell: bash
+      run: |
+        mkdir dist
+        mv target/${{ matrix.target }}/release/${{ env.project_name }}${{ matrix.file_ext }} dist/${{ env.project_name }}_${{ matrix.bin_name }}${{ matrix.file_ext }}
+    - name: Tar (macOS/Linux)
+      if: ${{ runner.os == 'macOS' || runner.os == 'Linux' }}
+      env:
+        tarname: build-${{ matrix.bin_name }}.tar.gz
+      run: |
+        cd dist
+        tar -czvf ../${{ env.tarname }} ./*
+        cd ..
+        rm -rf dist
+        mkdir dist
+        mv ${{ env.tarname }} dist
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: build-${{ matrix.bin_name }}
+        path: dist/*

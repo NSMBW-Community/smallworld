@@ -1,0 +1,24 @@
+[package]
+name = "smallworld"
+version = "0.1.0"
+edition = "2021"
+authors = ["RoadrunnerWMC"]
+license = "GPL-3.0-or-later"
+description = "A little tool to create region-free openingTitle.arc files for New Super Mario Bros. Wii, or to convert them from one region to another"
+readme = "../README.md"
+homepage = "https://github.com/RoadrunnerWMC/smallworld"
+repository = "https://github.com/RoadrunnerWMC/smallworld"
+categories = ["command-line-utilities", "game-development", "internationalization"]
+
+[dependencies]
+anyhow = "1.0.58"
+clap = { version = "3.2.8", features = ["derive"] }
+clap-verbosity-flag = "1.0.1"
+env_logger = "0.9.0"
+libsmallworld = { version = "0.1.0", path = "../libsmallworld" }
+log = "0.4.17"
+
+[dev-dependencies]
+assert_cmd = "2.0.4"
+assert_fs = "1.0.7"
+predicates = "2.1.1"
